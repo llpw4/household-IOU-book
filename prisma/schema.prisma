@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  RECEIVABLE
+  PAYABLE
+}
+
+enum TransactionType {
+  BORROW
+  REPAY
+}
+
+enum RepaymentPlan {
+  LUMP_SUM
+  INSTALLMENT
+  UNSPECIFIED
+}
+
+enum PartyType {
+  RELATIVE
+  FRIEND
+  ORGANIZATION
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  parties      Party[]
+}
+
+model Party {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  partyType PartyType @default(RELATIVE)
+  note      String?
+  createdAt DateTime  @default(now())
+  records   Record[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Record {
+  id              String          @id @default(cuid())
+  accountType     AccountType
+  transactionType TransactionType
+  partyId         String
+  party           Party           @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  amount          Decimal
+  transactionDate DateTime
+  transferMethod  String?
+  purpose         String?
+  hasInterest     Boolean         @default(false)
+  repaymentPlan   RepaymentPlan   @default(UNSPECIFIED)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  attachments     Attachment[]
+
+  @@index([partyId])
+  @@index([transactionDate])
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  recordId   String
+  record     Record   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  localPath  String
+  filename   String
+  uploadedAt DateTime @default(now())
+}
