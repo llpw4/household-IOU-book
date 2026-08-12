@@ -123,6 +123,7 @@ mvp/
 
 ## 开发提示
 
+- **控制台中文乱码（Windows）**：项目 npm 脚本已自动切换 UTF-8（`scripts/with-utf8.cjs`）。若 Cursor 内置终端仍乱码，可先执行 `chcp 65001`，或在 Windows「区域设置 → Beta: 使用 Unicode UTF-8」中开启全局 UTF-8
 - **Windows EPERM**：开发服务器运行时执行 `prisma generate` 可能报权限错误，先运行 `npm run dev:stop`
 - **seed 后无法登录 / 重定向循环**：执行 seed 会清空用户表，浏览器中旧的 JWT Cookie 会失效；刷新后系统会自动清除并跳转登录页
 - **数据文件**：SQLite 数据库位于 `prisma/prisma/dev.db`（Prisma 路径解析），不上传 Git
