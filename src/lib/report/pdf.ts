@@ -1,29 +1,10 @@
 import PDFDocument from "pdfkit";
-import { existsSync } from "fs";
-import path from "path";
 import type { AnalysisReport } from "./analysis";
 import { formatMoney } from "./analysis";
+import { resolveChineseFontPath } from "./chinese-font";
 
 const PAGE_MARGIN = 50;
 const CONTENT_WIDTH = 495;
-
-function resolveChineseFont(): string {
-  const candidates = [
-    path.join(process.env.WINDIR ?? "C:\\Windows", "Fonts", "simhei.ttf"),
-    path.join(process.env.WINDIR ?? "C:\\Windows", "Fonts", "msyh.ttc"),
-    path.join(process.env.WINDIR ?? "C:\\Windows", "Fonts", "simsun.ttc"),
-    "/System/Library/Fonts/PingFang.ttc",
-    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
-  ];
-
-  for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  throw new Error("未找到可用的中文字体，请安装 SimHei 或微软雅黑");
-}
 
 function formatDateTime(date: Date): string {
   return date.toLocaleString("zh-CN", {
@@ -133,7 +114,7 @@ function writeTable(
 }
 
 export async function generateAnalysisPdf(report: AnalysisReport): Promise<Buffer> {
-  const fontPath = resolveChineseFont();
+  const fontPath = resolveChineseFontPath();
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: PAGE_MARGIN, size: "A4" });
