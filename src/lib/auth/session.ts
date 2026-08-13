@@ -1,9 +1,52 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
 export const SESSION_COOKIE = "jiehuanben_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60;
+
+export function parseCookieSecureEnvValue(
+  value: string | undefined,
+): boolean | undefined {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  return undefined;
+}
+
+export function isHttpsProto(proto: string | null | undefined): boolean {
+  if (!proto) return false;
+  return proto.split(",")[0]?.trim().toLowerCase() === "https";
+}
+
+export function resolveSessionCookieSecureSync(options: {
+  nodeEnv?: string;
+  cookieSecureEnv?: string;
+  forwardedProto?: string | null;
+}): boolean {
+  const explicit = parseCookieSecureEnvValue(options.cookieSecureEnv);
+  if (explicit !== undefined) return explicit;
+
+  if (options.nodeEnv !== "production") return false;
+
+  if (options.forwardedProto) {
+    return isHttpsProto(options.forwardedProto);
+  }
+
+  return false;
+}
+
+/** 生产 HTTP 部署须 COOKIE_SECURE=false；HTTPS 反代应传 X-Forwarded-Proto */
+export async function resolveSessionCookieSecure(): Promise<boolean> {
+  const headerStore = await headers();
+  return resolveSessionCookieSecureSync({
+    nodeEnv: process.env.NODE_ENV,
+    cookieSecureEnv: process.env.COOKIE_SECURE,
+    forwardedProto:
+      headerStore.get("x-forwarded-proto") ??
+      headerStore.get("x-forwarded-protocol"),
+  });
+}
 
 export interface SessionPayload {
   userId: string;
@@ -51,10 +94,11 @@ export async function verifySessionToken(
 export async function setSessionCookie(payload: SessionPayload): Promise<void> {
   const token = await createSessionToken(payload);
   const cookieStore = await cookies();
+  const secure = await resolveSessionCookieSecure();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
@@ -62,7 +106,12 @@ export async function setSessionCookie(payload: SessionPayload): Promise<void> {
 
 export async function clearSessionCookie(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE);
+  const secure = await resolveSessionCookieSecure();
+  cookieStore.delete({
+    name: SESSION_COOKIE,
+    path: "/",
+    secure,
+  });
 }
 
 export async function getSession(): Promise<SessionPayload | null> {

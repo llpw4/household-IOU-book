@@ -11,7 +11,7 @@
     "test": "node scripts/with-utf8.cjs vitest run",
     "test:watch": "node scripts/with-utf8.cjs vitest",
     "db:migrate": "node scripts/with-utf8.cjs prisma migrate dev",
-    "db:seed": "node scripts/with-utf8.cjs tsx prisma/seed.ts",
+    "db:seed": "npx prisma db seed",
     "db:studio": "node scripts/with-utf8.cjs prisma studio",
     "postinstall": "prisma generate"
   },

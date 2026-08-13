@@ -25,6 +25,8 @@
 - Node.js 20+
 - npm 10+
 
+
+
 ## 快速开始
 
 ```bash
@@ -34,7 +36,7 @@ cp .env.example .env.local
 # 编辑 .env.local，设置 AUTH_SECRET（至少 16 位随机字符串）
 
 npx prisma migrate dev
-npm run db:seed    # 可选：填充演示数据（会清空现有数据）
+npx prisma db seed    # 可选：填充演示数据（会清空现有数据）
 npm run dev
 ```
 
@@ -78,6 +80,7 @@ npm run dev
 | -------------- | --- | ----------------------------------- |
 | `DATABASE_URL` | ✅   | SQLite 路径，默认 `file:./prisma/dev.db` |
 | `AUTH_SECRET`  | ✅   | JWT 签名密钥，至少 16 位随机字符串               |
+| `COOKIE_SECURE` | ❌  | `true`/`false`；HTTP 生产部署设为 `false` |
 
 
 详见 `.env.example`。
@@ -126,6 +129,7 @@ mvp/
 - **控制台中文乱码（Windows）**：项目 npm 脚本已自动切换 UTF-8（`scripts/with-utf8.cjs`）。若 Cursor 内置终端仍乱码，可先执行 `chcp 65001`，或在 Windows「区域设置 → Beta: 使用 Unicode UTF-8」中开启全局 UTF-8
 - **Windows EPERM**：开发服务器运行时执行 `prisma generate` 可能报权限错误，先运行 `npm run dev:stop`
 - **seed 后无法登录 / 重定向循环**：执行 seed 会清空用户表，浏览器中旧的 JWT Cookie 会失效；刷新后系统会自动清除并跳转登录页
+- **生产 HTTP 登录后刷新丢 Cookie**：`NODE_ENV=production` 且用 `http://IP` 访问时，须在 `.env` 设置 `COOKIE_SECURE=false` 并重新 build；长期建议配置 HTTPS
 - **数据文件**：SQLite 数据库位于 `prisma/prisma/dev.db`（Prisma 路径解析），不上传 Git
 
 
