@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import {
-  DEFAULT_BASE_PATH,
+  getBasePath,
   getSessionCookiePath,
   normalizeBasePath,
   withBasePath,
@@ -18,10 +18,23 @@ describe("normalizeBasePath", () => {
   });
 });
 
-describe("withBasePath", () => {
+describe("base path helpers", () => {
+  beforeEach(() => {
+    vi.stubEnv("BASE_PATH", "/jiehuanben");
+    vi.stubEnv("NEXT_PUBLIC_BASE_PATH", "/jiehuanben");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("reads base path from env", () => {
+    expect(getBasePath()).toBe("/jiehuanben");
+  });
+
   it("prefixes app routes with the configured base path", () => {
-    expect(withBasePath("/api/export")).toBe(`${DEFAULT_BASE_PATH}/api/export`);
-    expect(withBasePath("/login")).toBe(`${DEFAULT_BASE_PATH}/login`);
+    expect(withBasePath("/api/export")).toBe("/jiehuanben/api/export");
+    expect(withBasePath("/login")).toBe("/jiehuanben/login");
   });
 
   it("leaves absolute URLs unchanged", () => {
@@ -29,10 +42,25 @@ describe("withBasePath", () => {
       "https://example.com/api/export",
     );
   });
+
+  it("scopes cookies to the base path when configured", () => {
+    expect(getSessionCookiePath()).toBe("/jiehuanben");
+  });
 });
 
-describe("getSessionCookiePath", () => {
-  it("scopes cookies to the base path when configured", () => {
-    expect(getSessionCookiePath()).toBe(DEFAULT_BASE_PATH);
+describe("root deployment", () => {
+  beforeEach(() => {
+    vi.stubEnv("BASE_PATH", "");
+    vi.stubEnv("NEXT_PUBLIC_BASE_PATH", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("uses site root when BASE_PATH is empty", () => {
+    expect(getBasePath()).toBe("");
+    expect(withBasePath("/login")).toBe("/login");
+    expect(getSessionCookiePath()).toBe("/");
   });
 });

@@ -1,5 +1,3 @@
-export const DEFAULT_BASE_PATH = "/jiehuanben";
-
 export function normalizeBasePath(value: string | undefined): string {
   if (!value?.trim()) {
     return "";
@@ -11,7 +9,7 @@ export function normalizeBasePath(value: string | undefined): string {
 
 export function getBasePath(): string {
   return normalizeBasePath(
-    process.env.NEXT_PUBLIC_BASE_PATH ?? process.env.BASE_PATH ?? DEFAULT_BASE_PATH,
+    process.env.NEXT_PUBLIC_BASE_PATH ?? process.env.BASE_PATH,
   );
 }
 

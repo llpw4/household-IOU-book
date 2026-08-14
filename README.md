@@ -81,7 +81,7 @@ npm run dev
 | `DATABASE_URL` | ✅   | SQLite 路径，默认 `file:./prisma/dev.db` |
 | `AUTH_SECRET`  | ✅   | JWT 签名密钥，至少 16 位随机字符串               |
 | `COOKIE_SECURE` | ❌  | `true`/`false`；HTTP 生产部署设为 `false` |
-| `BASE_PATH`     | ❌  | 子路径部署，默认 `/jiehuanben`；根路径部署设为空字符串 |
+| `BASE_PATH`     | ✅  | 应用访问子路径，如 `/jiehuanben`；根路径部署设 `BASE_PATH=` |
 
 
 详见 `.env.example`。
@@ -89,15 +89,15 @@ npm run dev
 ## 页面导航
 
 
-| 路由                     | 说明                |
+| 路由（示例 `BASE_PATH=/jiehuanben`） | 说明                |
 | ---------------------- | ----------------- |
-| `/jiehuanben/`         | 概览（默认子路径）        |
-| `/jiehuanben/records/new` | 记一笔            |
-| `/jiehuanben/records`  | 流水列表              |
-| `/jiehuanben/charts`   | 图表                |
-| `/jiehuanben/parties`  | 相关方管理             |
-| `/jiehuanben/settings/data` | 数据管理（Excel / PDF） |
-| `/jiehuanben/login` · `/jiehuanben/register` | 登录 · 注册 |
+| `{BASE_PATH}/`         | 概览                |
+| `{BASE_PATH}/records/new` | 记一笔            |
+| `{BASE_PATH}/records`  | 流水列表              |
+| `{BASE_PATH}/charts`   | 图表                |
+| `{BASE_PATH}/parties`  | 相关方管理             |
+| `{BASE_PATH}/settings/data` | 数据管理（Excel / PDF） |
+| `{BASE_PATH}/login` · `{BASE_PATH}/register` | 登录 · 注册 |
 
 
 未登录访问业务页面会重定向至 `/login`；PDF 报告通过「数据管理」页下载，无需单独 npm 脚本。
@@ -132,7 +132,7 @@ mvp/
 - **Windows EPERM**：开发服务器运行时执行 `prisma generate` 可能报权限错误，先运行 `npm run dev:stop`
 - **seed 后无法登录 / 重定向循环**：执行 seed 会清空用户表，浏览器中旧的 JWT Cookie 会失效；刷新后系统会自动清除并跳转登录页
 - **生产 HTTP 登录后刷新丢 Cookie**：`NODE_ENV=production` 且用 `http://IP` 访问时，须在 `.env` 设置 `COOKIE_SECURE=false` 并重新 build；长期建议配置 HTTPS
-- **生产访问路径**：默认部署在 `/jiehuanben/`；Nginx 需反向代理该子路径，详见 `部署.md`
+- **生产访问路径**：在 `.env` 设置 `BASE_PATH`（如 `/jiehuanben`），Nginx `location` 与 `proxy_pass` 须与之一致，详见 `部署.md`
 - **生产 PDF 导出**：`git pull` 后执行 `npm install` 会自动下载 PDF 字体；若下载失败可运行 `npm run fonts:ensure`，或安装系统 Noto/黑体字体
 - **数据文件**：SQLite 数据库位于 `prisma/prisma/dev.db`（Prisma 路径解析），不上传 Git
 

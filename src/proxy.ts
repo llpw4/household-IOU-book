@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { withBasePath } from "@/lib/base-path";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { getClientIp, logAccess } from "@/lib/logger";
 
@@ -59,7 +60,7 @@ export async function proxy(request: NextRequest) {
       message: "未登录访问受保护页面，重定向登录",
     });
 
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL(withBasePath("/login"), request.url);
     if (pathname !== "/") {
       loginUrl.searchParams.set("next", pathname);
     }
