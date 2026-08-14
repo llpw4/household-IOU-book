@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit";
 import type { AnalysisReport } from "./analysis";
 import { formatMoney } from "./analysis";
-import { resolveChineseFontPath } from "./chinese-font";
+import { loadChineseFontBuffer } from "./chinese-font";
 
 const PAGE_MARGIN = 50;
 const CONTENT_WIDTH = 495;
@@ -114,7 +114,7 @@ function writeTable(
 }
 
 export async function generateAnalysisPdf(report: AnalysisReport): Promise<Buffer> {
-  const fontPath = resolveChineseFontPath();
+  const fontBuffer = await loadChineseFontBuffer();
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: PAGE_MARGIN, size: "A4" });
@@ -124,7 +124,7 @@ export async function generateAnalysisPdf(report: AnalysisReport): Promise<Buffe
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    doc.registerFont("zh", fontPath);
+    doc.registerFont("zh", fontBuffer);
     const ctx: PdfContext = { doc, y: PAGE_MARGIN, font: "zh" };
 
     writeTitle(ctx, "借还本 — 数据分析报告");

@@ -32,19 +32,21 @@ export async function GET(request: NextRequest) {
     const buffer = await generateAnalysisPdf(report);
     const filename = buildAnalysisFilename(report.generatedAt);
 
-    try {
-      const exportDir = path.join(/* turbopackIgnore: true */ process.cwd(), "data", "exports");
-      await mkdir(exportDir, { recursive: true });
-      await writeFile(path.join(exportDir, filename), buffer);
-    } catch (error) {
-      logApi("warn", "export.analysis_backup_failed", {
-        path: "/api/export/analysis",
-        message:
-          error instanceof Error
-            ? error.message
-            : "本地备份失败（可能文件正被占用）",
-      });
-    }
+    void (async () => {
+      try {
+        const exportDir = path.join(/* turbopackIgnore: true */ process.cwd(), "data", "exports");
+        await mkdir(exportDir, { recursive: true });
+        await writeFile(path.join(exportDir, filename), buffer);
+      } catch (error) {
+        logApi("warn", "export.analysis_backup_failed", {
+          path: "/api/export/analysis",
+          message:
+            error instanceof Error
+              ? error.message
+              : "本地备份失败（可能文件正被占用）",
+        });
+      }
+    })();
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

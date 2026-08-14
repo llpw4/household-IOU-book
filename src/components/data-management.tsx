@@ -18,7 +18,42 @@ export function DataManagementPanel() {
   const [parties, setParties] = useState<ParsedExcelParty[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  async function handleExportPdf() {
+    setExportError(null);
+    setIsExportingPdf(true);
+    try {
+      const response = await fetch("/api/export/analysis");
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(data?.error ?? "导出 PDF 失败");
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition");
+      let filename = "借还本数据分析报告.pdf";
+      const encodedName = disposition?.match(/filename\*=UTF-8''([^;]+)/)?.[1];
+      if (encodedName) {
+        filename = decodeURIComponent(encodedName);
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "导出 PDF 失败");
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }
 
   function handleAnalyze(formData: FormData) {
     setError(null);
@@ -72,12 +107,23 @@ export function DataManagementPanel() {
           <a href="/api/export">
             <Button type="button">导出全部流水</Button>
           </a>
-          <a href="/api/export/analysis">
-            <Button type="button" variant="outline">
-              导出 PDF 分析报告
-            </Button>
-          </a>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isExportingPdf}
+            onClick={() => void handleExportPdf()}
+          >
+            {isExportingPdf ? "生成中…" : "导出 PDF 分析报告"}
+          </Button>
         </div>
+        {exportError ? (
+          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {exportError}
+          </p>
+        ) : null}
+        {isExportingPdf ? (
+          <p className="mt-3 text-sm text-stone-500">正在生成 PDF，请稍候…</p>
+        ) : null}
       </Card>
 
       <Card>
