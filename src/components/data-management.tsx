@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/field";
+import { withBasePath } from "@/lib/base-path";
 
 export function DataManagementPanel() {
   const [diff, setDiff] = useState<ImportDiffItem[] | null>(null);
@@ -26,7 +27,9 @@ export function DataManagementPanel() {
     setExportError(null);
     setIsExportingPdf(true);
     try {
-      const response = await fetch("/api/export/analysis");
+      const response = await fetch(withBasePath("/api/export/analysis"), {
+        credentials: "same-origin",
+      });
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as {
           error?: string;
@@ -104,7 +107,7 @@ export function DataManagementPanel() {
           导出全部流水与相关方信息为 Excel 文件，含「相关方」「借还流水」两个工作表，便于人工校对和备份。
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <a href="/api/export">
+          <a href={withBasePath("/api/export")}>
             <Button type="button">导出全部流水</Button>
           </a>
           <Button

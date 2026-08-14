@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies, headers } from "next/headers";
 import type { NextRequest } from "next/server";
+import { getSessionCookiePath } from "@/lib/base-path";
 
 export const SESSION_COOKIE = "jiehuanben_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60;
@@ -99,7 +100,7 @@ export async function setSessionCookie(payload: SessionPayload): Promise<void> {
     httpOnly: true,
     sameSite: "lax",
     secure,
-    path: "/",
+    path: getSessionCookiePath(),
     maxAge: SESSION_MAX_AGE_SECONDS,
   });
 }
@@ -109,7 +110,7 @@ export async function clearSessionCookie(): Promise<void> {
   const secure = await resolveSessionCookieSecure();
   cookieStore.delete({
     name: SESSION_COOKIE,
-    path: "/",
+    path: getSessionCookiePath(),
     secure,
   });
 }
