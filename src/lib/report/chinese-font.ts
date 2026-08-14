@@ -51,7 +51,7 @@ export function resolveChineseFontPath(options?: {
   }
 
   throw new Error(
-    "未找到可用的中文字体。请确认 assets/fonts/NotoSansSC-Regular.woff 已随项目部署。",
+    "未找到可用的中文字体。请运行 npm install 或 npm run fonts:ensure 下载字体，或手动放置 assets/fonts/NotoSansSC-Regular.woff。",
   );
 }
 

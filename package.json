@@ -13,7 +13,8 @@
     "db:migrate": "node scripts/with-utf8.cjs prisma migrate dev",
     "db:seed": "npx prisma db seed",
     "db:studio": "node scripts/with-utf8.cjs prisma studio",
-    "postinstall": "prisma generate"
+    "fonts:ensure": "node scripts/ensure-pdf-font.cjs",
+    "postinstall": "prisma generate && node scripts/ensure-pdf-font.cjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -105,7 +105,7 @@ npm run dev
 
 ```
 mvp/
-├── assets/fonts/        # PDF 报告中文字体（Noto Sans SC）
+├── assets/fonts/        # PDF 字体（npm install 时下载，见 assets/fonts/README.md）
 ├── prisma/              # 数据模型、迁移、seed
 ├── src/
 │   ├── proxy.ts         # 请求鉴权网关（Next.js 16）
@@ -131,7 +131,7 @@ mvp/
 - **Windows EPERM**：开发服务器运行时执行 `prisma generate` 可能报权限错误，先运行 `npm run dev:stop`
 - **seed 后无法登录 / 重定向循环**：执行 seed 会清空用户表，浏览器中旧的 JWT Cookie 会失效；刷新后系统会自动清除并跳转登录页
 - **生产 HTTP 登录后刷新丢 Cookie**：`NODE_ENV=production` 且用 `http://IP` 访问时，须在 `.env` 设置 `COOKIE_SECURE=false` 并重新 build；长期建议配置 HTTPS
-- **生产 PDF 导出**：项目已内置 `assets/fonts/NotoSansSC-Regular.woff`，部署时需随代码一并上传
+- **生产 PDF 导出**：`git pull` 后执行 `npm install` 会自动下载 PDF 字体；若下载失败可运行 `npm run fonts:ensure`，或安装系统 Noto/黑体字体
 - **数据文件**：SQLite 数据库位于 `prisma/prisma/dev.db`（Prisma 路径解析），不上传 Git
 
 
