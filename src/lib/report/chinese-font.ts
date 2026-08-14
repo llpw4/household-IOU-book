@@ -5,6 +5,12 @@ import path from "path";
 export const BUNDLED_CHINESE_FONT = "NotoSansSC-Regular.woff";
 export const BUNDLED_CHINESE_FONT_TTF = "NotoSansSC-Regular.ttf";
 
+/** pdfkit/fontkit cannot subset TrueType Collection (.ttc) fonts. */
+export function isPdfKitCompatibleFontPath(fontPath: string): boolean {
+  const ext = path.extname(fontPath).toLowerCase();
+  return ext === ".ttf" || ext === ".otf" || ext === ".woff" || ext === ".woff2";
+}
+
 export function getBundledChineseFontCandidates(cwd = process.cwd()): string[] {
   return [
     path.join(cwd, "assets", "fonts", BUNDLED_CHINESE_FONT_TTF),
@@ -22,12 +28,7 @@ export function getSystemChineseFontCandidates(
     path.join(windowsRoot, "Fonts", "simhei.ttf"),
     path.join(windowsRoot, "Fonts", "msyh.ttf"),
     "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttf",
-    "/System/Library/Fonts/PingFang.ttc",
-    "/System/Library/Fonts/STHeiti Light.ttc",
-    path.join(windowsRoot, "Fonts", "msyh.ttc"),
-    path.join(windowsRoot, "Fonts", "simsun.ttc"),
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansSC-Regular.otf",
   ];
 }
 
@@ -45,7 +46,7 @@ export function resolveChineseFontPath(options?: {
   ];
 
   for (const candidate of candidates) {
-    if (exists(candidate)) {
+    if (exists(candidate) && isPdfKitCompatibleFontPath(candidate)) {
       return candidate;
     }
   }

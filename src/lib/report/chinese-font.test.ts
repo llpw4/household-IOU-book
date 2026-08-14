@@ -4,6 +4,7 @@ import {
   BUNDLED_CHINESE_FONT,
   BUNDLED_CHINESE_FONT_TTF,
   getBundledChineseFontCandidates,
+  isPdfKitCompatibleFontPath,
   loadChineseFontBuffer,
   resetChineseFontCacheForTests,
   resolveChineseFontPath,
@@ -44,6 +45,20 @@ describe("resolveChineseFontPath", () => {
         bundledCandidates: [bundled],
         systemCandidates: ["/missing/system.ttf"],
         exists: (candidate) => candidate === bundled,
+      }),
+    ).toBe(bundled);
+  });
+
+  it("skips ttc system fonts that pdfkit cannot subset", () => {
+    const bundled = "/app/assets/fonts/NotoSansSC-Regular.woff";
+    const ttc = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc";
+
+    expect(isPdfKitCompatibleFontPath(ttc)).toBe(false);
+    expect(
+      resolveChineseFontPath({
+        bundledCandidates: [bundled],
+        systemCandidates: [ttc],
+        exists: (candidate) => candidate === bundled || candidate === ttc,
       }),
     ).toBe(bundled);
   });
