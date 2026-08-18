@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { withBasePath } from "@/lib/base-path";
+import { NextRequest, NextResponse } from "next/server";
+import { createAppRedirectUrl } from "@/lib/base-path";
 import { clearSessionCookie } from "@/lib/auth/session";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   await clearSessionCookie();
-  return NextResponse.redirect(new URL(withBasePath("/login"), request.url));
+  return NextResponse.redirect(createAppRedirectUrl(request, "/login"));
 }

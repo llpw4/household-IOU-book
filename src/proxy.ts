@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { withBasePath } from "@/lib/base-path";
+import { createAppRedirectUrl } from "@/lib/base-path";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { getClientIp, logAccess } from "@/lib/logger";
 
@@ -60,10 +60,17 @@ export async function proxy(request: NextRequest) {
       message: "未登录访问受保护页面，重定向登录",
     });
 
-    const loginUrl = new URL(withBasePath("/login"), request.url);
-    if (pathname !== "/") {
-      loginUrl.searchParams.set("next", pathname);
-    }
+    const loginUrl = createAppRedirectUrl(request, "/login", {
+      searchParams: pathname !== "/" ? { next: pathname } : undefined,
+    });
+
+    logAccess("warn", "access.redirect_login", {
+      method,
+      path: pathname,
+      ip,
+      message: `重定向至 ${loginUrl.pathname}`,
+    });
+
     return NextResponse.redirect(loginUrl);
   }
 
@@ -81,5 +88,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Must include "/" — the regex below does not match the root path in Next.js matcher.
+  matcher: ["/", "/((?!_next/static|_next/image|favicon.ico).*)"],
 };

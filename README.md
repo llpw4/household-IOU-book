@@ -132,7 +132,8 @@ mvp/
 - **Windows EPERM**：开发服务器运行时执行 `prisma generate` 可能报权限错误，先运行 `npm run dev:stop`
 - **seed 后无法登录 / 重定向循环**：执行 seed 会清空用户表，浏览器中旧的 JWT Cookie 会失效；刷新后系统会自动清除并跳转登录页
 - **生产 HTTP 登录后刷新丢 Cookie**：`NODE_ENV=production` 且用 `http://IP` 访问时，须在 `.env` 设置 `COOKIE_SECURE=false` 并重新 build；长期建议配置 HTTPS
-- **生产访问路径**：在 `.env` 设置 `BASE_PATH`（如 `/jiehuanben`），Nginx `location` 与 `proxy_pass` 须与之一致，详见 `部署.md`
+- **生产访问路径**：在 `.env` 设置 `BASE_PATH`（如 `/jiehuanben`），**build 前必须写好**，然后 `npm run build`；Nginx 须与之一致
+- **301/308 循环**：多为未登录重定向到了 `/login`（缺 basePath）或 build 时未设 `BASE_PATH`；改 `.env` 后重新 build，并清除浏览器 Cookie
 - **生产 PDF 导出**：`git pull` 后执行 `npm install` 会自动下载 PDF 字体；若下载失败可运行 `npm run fonts:ensure`，或安装系统 Noto/黑体字体
 - **数据文件**：SQLite 数据库位于 `prisma/prisma/dev.db`（Prisma 路径解析），不上传 Git
 
