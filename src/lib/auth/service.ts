@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { verifyCsrfToken, CSRF_EXPIRED_MESSAGE, CSRF_INVALID_MESSAGE } from "@/lib/auth/csrf";
 import { prisma } from "@/lib/db/client";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { checkRateLimit, resetRateLimit } from "@/lib/auth/rate-limit";
+import { checkAuthRateLimit, resetAuthUserRateLimit } from "@/lib/auth/rate-limit";
 import {
   getSession,
   setSessionCookie,
@@ -121,13 +121,12 @@ export async function registerUser(
     return { error: confirmError };
   }
 
-  const rateKey = `register:${username.toLowerCase()}`;
-  const rate = checkRateLimit(rateKey, 5, 15 * 60 * 1000);
+  const rate = checkAuthRateLimit("register", username, context.ip);
   if (!rate.allowed) {
     logAuth("warn", "register.rate_limited", {
       username,
       ip: context.ip,
-      detail: `${rate.retryAfterSeconds}s`,
+      detail: `${rate.scope}:${rate.retryAfterSeconds}s`,
     });
     return { error: `注册尝试过于频繁，请 ${rate.retryAfterSeconds} 秒后再试` };
   }
@@ -148,7 +147,7 @@ export async function registerUser(
     select: { id: true, username: true },
   });
 
-  resetRateLimit(rateKey);
+  resetAuthUserRateLimit("register", username);
   await setSessionCookie({ userId: user.id, username: user.username });
 
   logAuth("info", "register.success", {
@@ -207,13 +206,12 @@ export async function loginUser(
     return { error: "请输入密码" };
   }
 
-  const rateKey = `login:${username.toLowerCase()}`;
-  const rate = checkRateLimit(rateKey, 5, 15 * 60 * 1000);
+  const rate = checkAuthRateLimit("login", username, context.ip);
   if (!rate.allowed) {
     logAuth("warn", "login.rate_limited", {
       username,
       ip: context.ip,
-      detail: `${rate.retryAfterSeconds}s`,
+      detail: `${rate.scope}:${rate.retryAfterSeconds}s`,
     });
     return { error: `登录尝试过于频繁，请 ${rate.retryAfterSeconds} 秒后再试` };
   }
@@ -239,7 +237,7 @@ export async function loginUser(
     return { error: "用户名或密码错误" };
   }
 
-  resetRateLimit(rateKey);
+  resetAuthUserRateLimit("login", username);
   await setSessionCookie({ userId: user.id, username: user.username });
 
   logAuth("info", "login.success", {
