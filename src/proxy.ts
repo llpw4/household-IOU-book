@@ -4,7 +4,12 @@ import { createAppRedirectUrl } from "@/lib/base-path";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { getClientIp, logAccess } from "@/lib/logger";
 
-const PUBLIC_PATHS = ["/login", "/register", "/api/auth/reset-session"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/register",
+  "/api/auth/reset-session",
+  "/api/auth/captcha",
+];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(

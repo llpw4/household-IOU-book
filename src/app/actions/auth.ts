@@ -3,11 +3,17 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createCsrfToken } from "@/lib/auth/csrf";
-import { logoutUser, loginUser, registerUser, checkUsernameAvailability } from "@/lib/auth/service";
+import {
+  logoutUser,
+  loginUser,
+  registerUser,
+  checkUsernameAvailability,
+  type AuthResult,
+} from "@/lib/auth/service";
 import { clearSessionCookie } from "@/lib/auth/session";
 import { getClientIp } from "@/lib/logger";
 
-export type AuthActionState = { error?: string } | undefined;
+export type AuthActionState = AuthResult | undefined;
 
 async function getAuthContext() {
   const headerStore = await headers();
@@ -25,6 +31,7 @@ export async function loginAction(
       password: String(formData.get("password") ?? ""),
       csrfToken: String(formData.get("csrfToken") ?? ""),
       honeypot: String(formData.get("website") ?? ""),
+      captcha: String(formData.get("captcha") ?? ""),
     },
     context,
   );
@@ -49,6 +56,7 @@ export async function registerAction(
       confirmPassword: String(formData.get("confirmPassword") ?? ""),
       csrfToken: String(formData.get("csrfToken") ?? ""),
       honeypot: String(formData.get("website") ?? ""),
+      captcha: String(formData.get("captcha") ?? ""),
     },
     context,
   );

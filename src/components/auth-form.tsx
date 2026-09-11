@@ -25,6 +25,7 @@ import {
   CSRF_MAX_AGE_SECONDS,
   isCsrfTokenExpired,
 } from "@/lib/auth/csrf-client";
+import { CaptchaField } from "@/components/captcha-field";
 import {
   getPasswordRuleChecks,
   PASSWORD_RULES_MESSAGE,
@@ -68,6 +69,7 @@ export function AuthForm({ mode, csrfToken: initialCsrfToken, next }: AuthFormPr
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordChecked, setPasswordChecked] = useState(false);
   const [confirmChecked, setConfirmChecked] = useState(false);
+  const [captchaReload, setCaptchaReload] = useState(0);
 
   const checkUsernameAvailability = useCallback(async (value: string) => {
     const trimmed = value.trim();
@@ -114,6 +116,26 @@ export function AuthForm({ mode, csrfToken: initialCsrfToken, next }: AuthFormPr
       setCsrfExpired(true);
     }
   }, [state?.error]);
+
+  useEffect(() => {
+    if (!state?.error) {
+      return;
+    }
+
+    if (state.errorKind === "captcha") {
+      setCaptchaReload((value) => value + 1);
+      return;
+    }
+
+    if (!isRegister && state.errorKind === "credentials") {
+      setUsername("");
+      setPassword("");
+      setCaptchaReload((value) => value + 1);
+      return;
+    }
+
+    setCaptchaReload((value) => value + 1);
+  }, [state?.error, state?.errorKind, isRegister]);
 
   useEffect(() => {
     if (!isRegister) {
@@ -233,12 +255,8 @@ export function AuthForm({ mode, csrfToken: initialCsrfToken, next }: AuthFormPr
           maxLength={32}
           pattern="[a-zA-Z0-9_]+"
           title="2-32 位字母、数字或下划线"
-          value={isRegister ? username : undefined}
-          onChange={
-            isRegister
-              ? (event) => setUsername(event.target.value)
-              : undefined
-          }
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
           onBlur={isRegister ? handleUsernameBlur : undefined}
         />
         {isRegister ? (
@@ -266,8 +284,8 @@ export function AuthForm({ mode, csrfToken: initialCsrfToken, next }: AuthFormPr
           autoComplete={isRegister ? "new-password" : "current-password"}
           required
           minLength={8}
-          value={isRegister ? password : undefined}
-          onChange={isRegister ? (event) => setPassword(event.target.value) : undefined}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
           onBlur={isRegister ? handlePasswordBlur : undefined}
         />
         {isRegister ? (
@@ -312,6 +330,12 @@ export function AuthForm({ mode, csrfToken: initialCsrfToken, next }: AuthFormPr
           ) : null}
         </div>
       ) : null}
+
+      <CaptchaField
+        key={captchaReload}
+        reloadNonce={captchaReload}
+        disabled={submitBlocked}
+      />
 
       {state?.error ? (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>

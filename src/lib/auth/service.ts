@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { verifyCaptchaAnswer } from "@/lib/auth/captcha";
 import { verifyCsrfToken, CSRF_EXPIRED_MESSAGE, CSRF_INVALID_MESSAGE } from "@/lib/auth/csrf";
 import { prisma } from "@/lib/db/client";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
@@ -23,6 +24,10 @@ export interface AuthUser {
 export interface AuthRequestContext {
   ip?: string;
 }
+
+export type AuthErrorKind = "captcha" | "credentials";
+
+export type AuthResult = { error?: string; errorKind?: AuthErrorKind };
 
 export const STALE_SESSION_RESET_PATH = "/api/auth/reset-session";
 
@@ -67,9 +72,10 @@ export async function registerUser(
     confirmPassword: string;
     csrfToken?: string;
     honeypot?: string;
+    captcha?: string;
   },
   context: AuthRequestContext = {},
-): Promise<{ error?: string }> {
+): Promise<AuthResult> {
   const username = input.username.trim();
 
   if (input.honeypot?.trim()) {
@@ -80,6 +86,13 @@ export async function registerUser(
     });
     return { error: "请求无效" };
   }
+
+  const captchaError = await validateCaptcha(input.captcha, {
+    action: "register",
+    username,
+    ip: context.ip,
+  });
+  if (captchaError) return captchaError;
 
   const csrfError = await validateCsrfToken(input.csrfToken, {
     action: "register",
@@ -166,9 +179,10 @@ export async function loginUser(
     password: string;
     csrfToken?: string;
     honeypot?: string;
+    captcha?: string;
   },
   context: AuthRequestContext = {},
-): Promise<{ error?: string }> {
+): Promise<AuthResult> {
   const username = input.username.trim();
 
   if (input.honeypot?.trim()) {
@@ -179,6 +193,13 @@ export async function loginUser(
     });
     return { error: "请求无效" };
   }
+
+  const captchaError = await validateCaptcha(input.captcha, {
+    action: "login",
+    username,
+    ip: context.ip,
+  });
+  if (captchaError) return captchaError;
 
   const csrfError = await validateCsrfToken(input.csrfToken, {
     action: "login",
@@ -223,7 +244,7 @@ export async function loginUser(
       ip: context.ip,
       message: "用户不存在",
     });
-    return { error: "用户名或密码错误" };
+    return { error: "用户名或密码错误", errorKind: "credentials" };
   }
 
   const valid = await verifyPassword(input.password, user.passwordHash);
@@ -234,7 +255,7 @@ export async function loginUser(
       ip: context.ip,
       message: "密码错误",
     });
-    return { error: "用户名或密码错误" };
+    return { error: "用户名或密码错误", errorKind: "credentials" };
   }
 
   resetAuthUserRateLimit("login", username);
@@ -294,6 +315,22 @@ export async function checkUsernameAvailability(
 
 export function toSessionPayload(user: AuthUser): SessionPayload {
   return { userId: user.id, username: user.username };
+}
+
+async function validateCaptcha(
+  answer: string | undefined,
+  context: { action: "login" | "register"; username: string; ip?: string },
+): Promise<AuthResult | null> {
+  const result = await verifyCaptchaAnswer(String(answer ?? ""));
+  if (!result.ok) {
+    logAuth("warn", `${context.action}.captcha_failed`, {
+      username: context.username,
+      ip: context.ip,
+      message: result.error,
+    });
+    return { error: result.error, errorKind: "captcha" };
+  }
+  return null;
 }
 
 async function validateCsrfToken(
